@@ -10,7 +10,6 @@ const app = express()
 app.use(express.json())
 
 
-
 app.get('/',(request, response) => {
   response.status(200).json({msg:'Bem vindo a nossa api!'})
 })
@@ -29,7 +28,22 @@ app.post('/auth/register', async (request, response) => {
   if (password !== confirmPassword)  {
     response.status(422).json({ msg: 'As senhas não coincidem!'})
   }
+  const userExists = await User.findOne({ email: email })
+
+  if (userExists){
+     return response.status(422).json({msg: 'Email já utilizado' })
+  }
+  const salt = await bcrypt.genSalt(12)
+  const passwordHash = await bcrypt.hash(password, salt)
+
+  const user = new User({
+    name,
+    email, 
+    password,
+  })
 })
+
+
 
 const dbUser = process.env.dbUser
 const dbPass = process.env.dbPass
