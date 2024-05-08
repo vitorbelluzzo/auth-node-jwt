@@ -14,6 +14,7 @@ app.get('/',(request, response) => {
   response.status(200).json({msg:'Bem vindo a nossa api!'})
 })
 
+  
 app.post('/auth/register', async (request, response) => {
   const { name, email, password, confirmPassword } = request.body
   if (!name) {
@@ -39,7 +40,7 @@ app.post('/auth/register', async (request, response) => {
   const user = new User({
     name,
     email, 
-    password,
+    password: passwordHash,
   })
 
   try {
@@ -49,6 +50,22 @@ app.post('/auth/register', async (request, response) => {
     console.log(error);
     response.status(500).json({msg: 'Aconteceu um erro no servidor, tente novamente mais tarde!',
     })
+  }
+})
+
+app.post('/auth/login', async (request,response) => {
+  const { email, password } = request.body
+  if (!email) {
+    response.status(422).json({ msg: 'O email é obrigatório!'})
+  }
+  if (!password) {
+    response.status(422).json({ msg: 'A senha é obrigatório!'})
+  }
+
+  const user = await User.findOne({ email: email })
+
+  if (!user){
+     return response.status(422).json({msg: 'Usuário nao encontrado' })
   }
 })
 
