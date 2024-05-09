@@ -65,8 +65,16 @@ app.post('/auth/login', async (request,response) => {
   const user = await User.findOne({ email: email })
 
   if (!user){
-     return response.status(422).json({msg: 'Usuário nao encontrado' })
+     return response.status(404).json({msg: 'Usuário nao encontrado' })
   }
+
+  const checkpassword = bcrypt.compare(password, user.password)
+
+  if (!checkpassword) {
+    response.status(422).json({msg: 'Senha invalida!'})    
+  }
+
+
 })
 
 
