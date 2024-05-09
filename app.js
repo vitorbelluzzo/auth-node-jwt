@@ -68,7 +68,7 @@ app.post('/auth/login', async (request,response) => {
      return response.status(404).json({msg: 'Usuário nao encontrado' })
   }
 
-  const checkpassword = bcrypt.compare(password, user.password)
+  const checkpassword = await bcrypt.compare(password, user.password)
 
   if (!checkpassword) {
     response.status(422).json({msg: 'Senha invalida!'})    
