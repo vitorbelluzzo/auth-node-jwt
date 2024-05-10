@@ -14,6 +14,29 @@ app.get('/',(request, response) => {
   response.status(200).json({msg:'Bem vindo a nossa api!'})
 })
 
+app.get('/user/:id', checkToken(), async (request, response) => {
+  const id = request.params.id
+  const user = await User.findById(id, '-password')
+
+!user ? response.status(404).json({msg:"Usuário não encontrado"})  : response.status(200).json({ user })
+})
+
+function checkToken(request, response, next) {
+  const authHeader = request.headers['authorization']
+  const token = authHeader && authHeader.split(" ")[1]
+
+  if (!token) {
+    response.status(401).json({msg: 'Acesso negado!'})
+  }  
+  try {
+    const secret = process.env.SECRET
+    jwt.verify(token, secret)
+  } catch (error) {
+    response.status(400).json({msg:"Token inválido"})
+  }
+  
+}
+
   
 app.post('/auth/register', async (request, response) => {
   const { name, email, password, confirmPassword } = request.body
@@ -53,6 +76,7 @@ app.post('/auth/register', async (request, response) => {
   }
 })
 
+//login
 app.post('/auth/login', async (request,response) => {
   const { email, password } = request.body
   if (!email) {
@@ -72,6 +96,18 @@ app.post('/auth/login', async (request,response) => {
 
   if (!checkpassword) {
     response.status(422).json({msg: 'Senha invalida!'})    
+  }
+  
+
+  try {
+    const secret = process.env.SECRET
+    const token = jwt.sign({
+      id: user._id
+    }, secret)
+    response.status(200).json({msg:"Autenticação realizada com sucesso", token})
+
+  } catch (error) {
+    response.status(error).json({msg: 'Aconteceu um erro no servidor, tente novamente mais tarde!',})
   }
 
 
