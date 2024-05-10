@@ -14,28 +14,28 @@ app.get('/',(request, response) => {
   response.status(200).json({msg:'Bem vindo a nossa api!'})
 })
 
-app.get('/user/:id', checkToken(), async (request, response) => {
-  const id = request.params.id
-  const user = await User.findById(id, '-password')
-
-!user ? response.status(404).json({msg:"Usuário não encontrado"})  : response.status(200).json({ user })
-})
-
 function checkToken(request, response, next) {
-  const authHeader = request.headers['authorization']
-  const token = authHeader && authHeader.split(" ")[1]
+  const authHeader = request.headers['authorization']; 
+  const token = authHeader && authHeader.split(" ")[1];
 
   if (!token) {
-    response.status(401).json({msg: 'Acesso negado!'})
-  }  
+    return response.status(401).json({msg: 'Acesso negado!'});}  
   try {
-    const secret = process.env.SECRET
-    jwt.verify(token, secret)
+    const secret = process.env.SECRET;
+    jwt.verify(token, secret);
+    next();
   } catch (error) {
-    response.status(400).json({msg:"Token inválido"})
+    response.status(400).json({msg:"Token inválido"});
   }
-  
 }
+
+app.get('/user/:id', checkToken, async (request, response) => { 
+  const id = request.params.id;
+  const user = await User.findById(id, '-password');
+
+  !user ? response.status(404).json({msg:"Usuário não encontrado"}) : response.status(200).json({ user });
+});
+
 
   
 app.post('/auth/register', async (request, response) => {
@@ -76,42 +76,36 @@ app.post('/auth/register', async (request, response) => {
   }
 })
 
-//login
+
 app.post('/auth/login', async (request,response) => {
-  const { email, password } = request.body
-  if (!email) {
-    response.status(422).json({ msg: 'O email é obrigatório!'})
-  }
-  if (!password) {
-    response.status(422).json({ msg: 'A senha é obrigatório!'})
+  const { email, password } = request.body;
+  if (!email || !password) { 
+    return response.status(422).json({ msg: 'O email e a senha são obrigatórios!'});
   }
 
-  const user = await User.findOne({ email: email })
+  const user = await User.findOne({ email });
 
   if (!user){
-     return response.status(404).json({msg: 'Usuário nao encontrado' })
+    return response.status(404).json({msg: 'Usuário não encontrado' });
   }
 
-  const checkpassword = await bcrypt.compare(password, user.password)
+  const checkpassword = await bcrypt.compare(password, user.password);
 
   if (!checkpassword) {
-    response.status(422).json({msg: 'Senha invalida!'})    
+    return response.status(401).json({msg: 'Credenciais inválidas!'}); 
   }
-  
 
   try {
-    const secret = process.env.SECRET
+    const secret = process.env.SECRET;
     const token = jwt.sign({
       id: user._id
-    }, secret)
-    response.status(200).json({msg:"Autenticação realizada com sucesso", token})
+    }, secret);
+    response.status(200).json({msg:"Autenticação realizada com sucesso", token});
 
   } catch (error) {
-    response.status(error).json({msg: 'Aconteceu um erro no servidor, tente novamente mais tarde!',})
+    response.status(500).json({msg: 'Aconteceu um erro no servidor, tente novamente mais tarde!'});
   }
-
-
-})
+});
 
 
 
